@@ -31,14 +31,35 @@
 typedef int (*CompareFuncT)( void *, void * );
 typedef void (*DestructFuncT)( void * );
 
+
+
+//Similar to a Node struct but used to keep track of file names and word counts for that file
+typedef struct FileNode_ {
+    
+    int count;                      //# of times a word appears in that file
+    struct FileNode_ * next;        //next file in list
+    char * name;                    //file name
+    
+} FileNode;
+
+//A list of files for each word
+/*struct SortedFileList {
+    struct FileNode_ *head;
+    CompareFuncT cf;
+    
+};
+typedef struct SortedFileList *SortedFilePtr;*/
+
+
 //Node structure that will makeup the list and hold the data
 typedef struct Node_ {
   
   char * data;
   struct Node_ * next;
+  FileNode * file;
+  //SortedFilePtr fileList;
     
 } Node;
-
 
 //-=-=-=-You must implement all the functions and definitions below-=-=-=-
 
@@ -93,7 +114,7 @@ void SLDestroy(SortedListPtr list);
  * Data item equality should be tested with the user's comparator function *
  */
 
-int SLInsert(SortedListPtr list, char *newObj);
+int SLInsert(SortedListPtr list, char *newObj, char *fileName);
 
 
 /*

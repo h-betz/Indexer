@@ -3,8 +3,40 @@
 #include <string.h>
 #include "sorted-list.h"
 
+//Compares word count for each file
+int compareCount(void *c1, void *c2) {
+    
+    int count1 = *((int *)c1);
+    int count2 = *((int *)c2);
+    
+    if (c1 < c2) {
+        return -1;
+    } else if (c2 > c1) {
+        return 1;
+    }
+    
+    return 0;
+}
+
+//Creates a file node that keeps track of a specific word count in that file
+FileNode* createFile(char *name, FileNode *nxt) {
+    
+    FileNode *fn = malloc(sizeof(FileNode));
+    if (fn == NULL) {
+        printf("Error! Failed to allocate memory for a new file node.\n");
+        return NULL;
+    }
+    
+    fn->count = 1;
+    fn->name = name;
+    fn->next = nxt;
+    return fn;
+    
+}
+
+
 //A function that creates a node struct and returns a pointer to it
-Node* createNode(char *data, Node *nxt) {
+Node* createNode(char *data, Node *nxt, char* file) {
    
     Node * node = malloc(sizeof(Node));                                 //allocates memory for the node
     if (node == NULL) {                                                 //checks to see if malloc successfully allocated memory
@@ -14,9 +46,11 @@ Node* createNode(char *data, Node *nxt) {
     
     node->data = data;                                                  //assign the data to the node
     node->next = nxt;                                                   //set the node's next node to nxt
+    node->file = createFile(file, NULL);                                //node to point to list of files that contains this word
     
     return node;                                                        //return the node
 }
+
 
 //Creates a sorted list and returns a pointer to it
 SortedListPtr SLCreate(CompareFuncT cf) {
@@ -68,13 +102,58 @@ void SLDestroyIterator(SortedListIteratorPtr iter) {
     return;
 }
 
+void sortFiles(char *fileName, FileNode *target, FileNode *prev, Node *words) {
+    
+    if (words->file == NULL || words->file->next == NULL) {
+        return;
+    }
+    
+    FileNode *ptr = words->file;
+    FileNode *tempPrev = NULL;
+    
+    //Loop until our target count is greater than our temporary count
+    while (target->count < ptr->count) {
+        tempPrev = ptr;
+        ptr = ptr->next;
+    }
+    
+    prev->next = target->next;
+    target->next = ptr;
+    tempPrev->next = target;
+    
+}
+
+void findFile(Node *word, char* target) {
+    
+    FileNode *fn = word->file;
+    FileNode *prev = NULL;
+    int comp = 0;
+    
+    while (fn != NULL) {
+        comp = strcmp(fn->name, target);
+        if (comp == 0) {
+            //we have a match!
+            fn->count++;
+            printf("Word: %s, Count: %d\n", word->data, fn->count);
+            sortFiles(target, fn, prev, word);
+            return;
+        } 
+        prev = fn;
+        fn = fn->next;
+    }
+    
+    //File isn't here, so we have to create a node for it
+    prev->next = createFile(target, NULL);                  //goes at the end of the list since it has the lowest occurence count
+    
+}
+
 //inserts the new data item in sorted order
-int SLInsert(SortedListPtr  list, char *newObj) {
+int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
     
     int comp = 0;
     
     if (list->head == NULL) {
-        list->head = createNode(newObj, NULL);
+        list->head = createNode(newObj, NULL, fileName);
         return 1;
     } 
     
@@ -84,10 +163,10 @@ int SLInsert(SortedListPtr  list, char *newObj) {
     while (ptr != NULL) {
         comp = list->cf(ptr->data, newObj);
         if (comp > 0) {                                                     //new string, comes before old
-            prev->next = createNode(newObj, ptr);
+            prev->next = createNode(newObj, ptr, fileName);
             return 1;
         } else if (comp == 0) {
-            ptr->next = createNode(newObj, ptr->next);
+            findFile(ptr, fileName);
             return 1;
         }
         prev = ptr;
@@ -95,7 +174,7 @@ int SLInsert(SortedListPtr  list, char *newObj) {
        
     }
     
-    prev->next = createNode(newObj, NULL);
+    prev->next = createNode(newObj, NULL, fileName);
     return 1;
     
 }
@@ -113,7 +192,6 @@ char * SLNextItem(SortedListIteratorPtr iter) {
     }
     item = iter->node->data;                            //our data item is the iterator's current node's data
     iter->node = iter->node->next;                      //have our iterator point to the next node in the list
-    
     return item;
 }
 

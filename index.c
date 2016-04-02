@@ -19,8 +19,9 @@ int compareStrings(void *c1, void *c2) {
 
 }
 
+
 //Parses the string line into separate words, or tokens
-void tokenize(char *string) {
+void tokenize(char *string, char *fileName) {
     
     char c = string[ind];
     char *token = malloc(strlen(string) + 1);
@@ -43,7 +44,7 @@ void tokenize(char *string) {
         }
             
         token[tokenIndex] = '\0';
-        SLInsert(words, token);
+        SLInsert(words, token, fileName);
 
     }
 
@@ -60,11 +61,10 @@ void readFile(char *fileName) {
         return;
     }
     
-    
     while (fgets(string, sizeof(string), f)) {
         int length = strlen(string);
         while (ind < length) {
-            tokenize(string);
+            tokenize(string, fileName);
         }
         ind = 0;
     }
@@ -120,10 +120,13 @@ void readDirect(char *path) {
     
 }
 
+
 int main (int argc, char** argv) {
     
     char *path = argv[1];
-    int (*compare)(void *, void*) = compareStrings;
+    
+    int (*compare)(void *, void *) = compareStrings;
+    
     words = SLCreate(compare);
     readDirect(path);
     SortedListIteratorPtr iter = SLCreateIterator(words);
@@ -131,6 +134,13 @@ int main (int argc, char** argv) {
     while (str != NULL) {
         printf("%s\n", str);
         str = SLGetItem(iter);
+    }
+    SLDestroyIterator(iter);
+    
+    while (words->head != NULL) {
+        Node *n = words->head;
+        free(n);
+        words->head = words->head->next;
     }
     
     return 0;
