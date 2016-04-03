@@ -45,16 +45,15 @@ void tokenize(char *string, char *fileName) {
             
         token[tokenIndex] = '\0';
         SLInsert(words, token, fileName);
-
     }
 
     
 }
 
 /*Reads the contents of the file and calls the tokenizer function to tokenize the contents*/
-void readFile(char *fileName) {
+void readFile(char *filePath, char *fileName) {
     
-    FILE *f = fopen(fileName, "r");                         //open the file in read mode
+    FILE *f = fopen(filePath, "r");                         //open the file in read mode
     char string[1024];                                      //create a 1024 byte char array to store the string in
     if (f == NULL) {                                        //if failed to open the file, print error and return
         printf("error\n");
@@ -91,12 +90,11 @@ void readDirect(char *path) {
             } else if (dent->d_type == DT_REG) {
                 
                 /*The following appends the file name to the end of the file/directory path*/
-                
                 char *string = malloc(strlen(dent->d_name) + strlen(path) + 2);
                 strcat(string, path);
                 strcat(string, "/");
                 strcat(string, dent->d_name);
-                readFile(string);                                                   //read the contents of the file
+                readFile(string, dent->d_name);                                                   //read the contents of the file
                 free(string);                                                       //free the memory allocated for the string
                 
             } else {
@@ -115,7 +113,30 @@ void readDirect(char *path) {
             printf("Error! Failed to open file!\n");                                    //if failure, print an error and return
             return;
         }
-        readFile(path);                                                                 //call the readFile function
+        //readFile(path);                                                                 //call the readFile function
+    }
+    
+}
+
+void writeToFile() {
+    
+    //Iterate through the words
+    while (words->head != NULL) {
+        
+        printf("%s\n", words->head->data);
+        
+        //Iterate through the files of the word
+        while (words->head->file != NULL) {
+            printf("\t%s: %d\n", words->head->file->name, words->head->file->count);
+            FileNode *fn = words->head->file;
+            words->head->file = words->head->file->next;
+            free(fn);
+        }
+        
+        Node *word = words->head;
+        words->head = words->head->next;
+        free(word);
+        
     }
     
 }
@@ -129,19 +150,21 @@ int main (int argc, char** argv) {
     
     words = SLCreate(compare);
     readDirect(path);
-    SortedListIteratorPtr iter = SLCreateIterator(words);
+    writeToFile();
+    /*SortedListIteratorPtr iter = SLCreateIterator(words);
     char *str = SLGetItem(iter);
     while (str != NULL) {
         printf("%s\n", str);
         str = SLGetItem(iter);
     }
-    SLDestroyIterator(iter);
+    SLDestroyIterator(iter);*/
     
-    while (words->head != NULL) {
+    /*while (words->head != NULL) {
         Node *n = words->head;
         free(n);
         words->head = words->head->next;
-    }
+    }*/
+    
     
     return 0;
 }

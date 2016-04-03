@@ -26,7 +26,7 @@ FileNode* createFile(char *name, FileNode *nxt) {
         printf("Error! Failed to allocate memory for a new file node.\n");
         return NULL;
     }
-    
+
     fn->count = 1;
     fn->name = name;
     fn->next = nxt;
@@ -103,8 +103,17 @@ void SLDestroyIterator(SortedListIteratorPtr iter) {
 }
 
 void sortFiles(char *fileName, FileNode *target, FileNode *prev, Node *words) {
-    
-    if (words->file == NULL || words->file->next == NULL) {
+
+    if (words->file->next == NULL) {
+        return;
+    }
+    if (target->count > words->file->count) {
+        FileNode *temp = target->next;
+        target->next = words->file;
+        words->file = target;
+        if (prev != NULL) {
+            prev->next = temp;
+        }
         return;
     }
     
@@ -128,13 +137,11 @@ void findFile(Node *word, char* target) {
     FileNode *fn = word->file;
     FileNode *prev = NULL;
     int comp = 0;
-    
     while (fn != NULL) {
         comp = strcmp(fn->name, target);
         if (comp == 0) {
             //we have a match!
             fn->count++;
-            printf("Word: %s, Count: %d\n", word->data, fn->count);
             sortFiles(target, fn, prev, word);
             return;
         } 
@@ -173,7 +180,6 @@ int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
         ptr = ptr->next;
        
     }
-    
     prev->next = createNode(newObj, NULL, fileName);
     return 1;
     
@@ -190,6 +196,7 @@ char * SLNextItem(SortedListIteratorPtr iter) {
         return item;
         
     }
+    
     item = iter->node->data;                            //our data item is the iterator's current node's data
     iter->node = iter->node->next;                      //have our iterator point to the next node in the list
     return item;
