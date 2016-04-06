@@ -104,6 +104,10 @@ void SLDestroyIterator(SortedListIteratorPtr iter) {
 
 void sortFiles(char *fileName, FileNode *target, FileNode *prev, Node *words) {
 
+    if (words->file == target) {
+        return;
+    }
+    
     if (words->file->next == NULL) {
         return;
     }
@@ -137,18 +141,18 @@ void findFile(Node *word, char* target) {
     FileNode *fn = word->file;
     FileNode *prev = NULL;
     int comp = 0;
+    
     while (fn != NULL) {
         comp = strcmp(fn->name, target);
         if (comp == 0) {
-            //we have a match!
+            //we have a match!            
             fn->count++;
-            sortFiles(target, fn, prev, word);
+            sortFiles(target, fn, prev, word);            
             return;
         } 
         prev = fn;
         fn = fn->next;
     }
-    
     //File isn't here, so we have to create a node for it
     prev->next = createFile(target, NULL);                  //goes at the end of the list since it has the lowest occurence count
     
@@ -170,12 +174,20 @@ int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
     while (ptr != NULL) {
         comp = list->cf(ptr->data, newObj);
         if (comp > 0) {                                                     //new string, comes before old
+            if (prev == NULL) {
+                prev = createNode(newObj, ptr, fileName);
+                prev->next = list->head;
+                list->head = prev;
+                return;
+            }           
             prev->next = createNode(newObj, ptr, fileName);
             return 1;
-        } else if (comp == 0) {
+        } else if (comp == 0) { 
             findFile(ptr, fileName);
+            //printf("here\n");
             return 1;
         }
+        
         prev = ptr;
         ptr = ptr->next;
        
