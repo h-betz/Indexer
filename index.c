@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <libgen.h>
 #include "sorted-list.h"
 
 int ind = 0;
@@ -25,6 +26,11 @@ void tokenize(char *string, char *fileName) {
     
     char c = string[ind];
     char *token = malloc(strlen(string) + 1);
+    int length = strlen(fileName) + 1;
+    char *file = malloc(strlen(fileName) + 1);
+    strcpy(file, fileName);
+    file[length - 1] = '\0';
+    
     token[0] - '\0';
     ind++;
     int tokenIndex = 0;
@@ -39,13 +45,14 @@ void tokenize(char *string, char *fileName) {
         
         while (c != '\0' && isalnum(c)) {
             token[tokenIndex] = tolower(c);
+            token[tokenIndex] = c;
             tokenIndex++;
             c = string[ind];
             ind++;
         }
 
         token[tokenIndex] = '\0';
-        SLInsert(words, token, fileName);
+        SLInsert(words, token, file);
     }
 
     
@@ -64,7 +71,7 @@ void readFile(char *filePath, char *fileName) {
     while (fgets(string, sizeof(string), f)) {
         int length = strlen(string);
         while (ind < length) {
-            tokenize(string, fileName);
+            tokenize(string, filePath);
         }
         ind = 0;
     }
@@ -108,7 +115,9 @@ void readDirect(char *path) {
             printf("Error! Failed to open file: %s\n", path);                                    //if failure, print an error and return
             return;
         }
-        //readFile(path);                                                                 //call the readFile function
+        char *fileName;
+        fileName = basename(path);
+        readFile(path, fileName);
     }
     
 }
