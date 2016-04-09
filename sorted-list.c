@@ -29,7 +29,6 @@ FileNode* createFile(char *name, FileNode *nxt) {
 
     fn->count = 1;
     fn->name = name;
-    //printf("File: %s\n", fn->name);
     fn->next = nxt;
     return fn;
     
@@ -47,7 +46,6 @@ Node* createNode(char *data, Node *nxt, char* file) {
     
     node->data = data;                                                  //assign the data to the node
     node->next = nxt;                                                   //set the node's next node to nxt
-    //printf("File: %s\n", file);
     node->file = createFile(file, NULL);                                //node to point to list of files that contains this word
     
     return node;                                                        //return the node
@@ -69,6 +67,13 @@ SortedListPtr SLCreate(CompareFuncT cf) {
     sl->head = NULL;                                                    //set the head of the list to null
     
     return sl;
+}
+
+void DestroyWord(Node *word) {
+    
+    free(word->data);
+    free(word);
+    
 }
 
 //Destroys a sorted list pointer
@@ -161,7 +166,7 @@ void findFile(Node *word, char* target) {
 
 //inserts the new data item in sorted order
 int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
-    //printf("File: %s\n", fileName);
+
     int comp = 0;
     if (list->head == NULL) {
         list->head = createNode(newObj, NULL, fileName);
@@ -184,7 +189,6 @@ int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
             return 1;
         } else if (comp == 0) { 
             findFile(ptr, fileName);
-            //printf("here\n");
             return 1;
         }
         
