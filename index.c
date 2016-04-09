@@ -122,16 +122,25 @@ void readDirect(char *path) {
     
 }
 
-void writeToFile() {
+void writeToFile(char *new_file) {
+    
+    FILE *fp = fopen(new_file, "wb");
+    fputs("{\"list\":[\n", fp);
     
     //Iterate through the words
     while (words->head != NULL) {
         
-        printf("%s\n", words->head->data);
+        fprintf(fp, "\t{\"%s\":[\n", words->head->data);
         
         //Iterate through the files of the word
         while (words->head->file != NULL) {
-            printf("\t%s: %d\n", words->head->file->name, words->head->file->count);
+            
+            if (words->head->file->next != NULL) {
+                fprintf(fp, "\t\t{\"%s\": %d},\n", words->head->file->name, words->head->file->count);  
+            } else {
+                fprintf(fp, "\t\t{\"%s\": %d}\n", words->head->file->name, words->head->file->count); 
+            } 
+             
             FileNode *fn = words->head->file;
             words->head->file = words->head->file->next;
             free(fn);
@@ -142,19 +151,23 @@ void writeToFile() {
         free(word);
         
     }
+    fprintf(fp, "\t]}\n");
+    fprintf(fp, "]}\n");
+    fclose(fp);
     
 }
 
 
 int main (int argc, char** argv) {
     
-    char *path = argv[1];
+    char *path = argv[2];
+    char *new_file = argv[1];
     
     int (*compare)(void *, void *) = compareStrings;
     
     words = SLCreate(compare);
     readDirect(path);
-    writeToFile();    
+    writeToFile(new_file);    
     
     return 0;
 }
