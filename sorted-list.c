@@ -22,12 +22,14 @@ int compareCount(void *c1, void *c2) {
 FileNode* createFile(char *name, FileNode *nxt) {
     
     FileNode *fn = malloc(sizeof(FileNode));
+    
+    //Check if allocation of memory was a success
     if (fn == NULL) {
         printf("Error! Failed to allocate memory for a new file node.\n");
         return NULL;
     }
 
-    fn->count = 1;
+    fn->count = 1;              //Initialize count of word appearing in this file
     fn->name = name;
     fn->next = nxt;
     return fn;
@@ -71,8 +73,8 @@ SortedListPtr SLCreate(CompareFuncT cf) {
 
 void DestroyWord(Node *word) {
     
-    free(word->data);
-    free(word);
+    free(word->data);                       //Free the memory allocated for the word string
+    free(word);                             //Free the word node itself
     
 }
 
@@ -109,19 +111,23 @@ void SLDestroyIterator(SortedListIteratorPtr iter) {
     return;
 }
 
+//Sorts file nodes in decreasing order of their count
 void sortFiles(char *fileName, FileNode *target, FileNode *prev, Node *words) {
     
+    //Return if the first file in the list is our target or if its the only file in the list
     if (words->file == target) {
         return;
     }
     if (words->file->next == NULL) {
         return;
     }
-    if (target->count > words->file->count) {
-        FileNode *temp = target->next;
-        target->next = words->file;
-        words->file = target;
-        if (prev != NULL) {
+
+    //Switch the head of the file list with our target
+    if (target->count >= words->file->count) {
+        FileNode *temp = target->next;              //temporary file node
+        target->next = words->file;                 //target's next value is the head of the list
+        words->file = target;                       //head of the list points to the target
+        if (prev != NULL) {                         //If previous node isn't NULL, point to target's old next
             prev->next = temp;
         }
         return;
@@ -129,45 +135,48 @@ void sortFiles(char *fileName, FileNode *target, FileNode *prev, Node *words) {
     
     FileNode *ptr = words->file;
     FileNode *tempPrev = NULL;
-    
+        
     //Loop until our target count is greater than our temporary count
     while (target->count < ptr->count) {
         tempPrev = ptr;
         ptr = ptr->next;
     }
-    
-    prev->next = target->next;
-    target->next = ptr;
-    tempPrev->next = target;
+
+    prev->next = target->next;              //Previous node points to next, next file
+    target->next = ptr;                     //Target next points to the first file count lower than it
+    tempPrev->next = target;                //The temporary previous file points to our target
     
 }
 
+//Finds the file with the same name as target for the node word (creates a file node if necessary)
 void findFile(Node *word, char* target) {
     
-    FileNode *fn = word->file;
+    FileNode *fn = word->file;                      //file node pointing to head of the file list for this word
     FileNode *prev = NULL;
-    int comp = 0;
+    int comp = 0;                                   //Initialize comparator integer
     
-    while (fn != NULL) {
-        comp = strcmp(fn->name, target);
-        if (comp == 0) {
-            //we have a match!            
-            fn->count++;
-            sortFiles(target, fn, prev, word);            
+    while (fn != NULL) {                            //Loop through list until the end or until we have a match
+        comp = strcmp(fn->name, target);            //Compare our target name with current file node name
+        if (comp == 0) {                            //If 0, we have a match
+            //we have a match!
+            fn->count++;                            //Increment count for this file
+            sortFiles(target, fn, prev, word);      //Sort files if necessary 
+            //printf("Sorted\n");        
             return;
         } 
-        prev = fn;
-        fn = fn->next;
+        prev = fn;                                  //Have previous file node point to our current one
+        fn = fn->next;                              //Have our file node pointer point to the next one
     }
     //File isn't here, so we have to create a node for it
     prev->next = createFile(target, NULL);                  //goes at the end of the list since it has the lowest occurence count
     
 }
 
-//inserts the new data item in sorted order
+//inserts the new word item in sorted order
 int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
 
     int comp = 0;
+    //Word list hasn't been created, so we create it with this word as the head
     if (list->head == NULL) {
         list->head = createNode(newObj, NULL, fileName);
         return 1;
@@ -176,19 +185,21 @@ int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
     Node *ptr = list->head;
     Node *prev = NULL;
     
+    //Loop until the end of the list or until we return
     while (ptr != NULL) {
         comp = list->cf(ptr->data, newObj);
-        if (comp > 0) {                                                     //new string, comes before old
-            if (prev == NULL) {
-                prev = createNode(newObj, ptr, fileName);
-                prev->next = list->head;
-                list->head = prev;
-                return;
+        if (comp > 0) {                                                     //new word, comes before old
+            if (prev == NULL) {                                             //New word becomes the head of the list
+                prev = createNode(newObj, ptr, fileName);                   //Create a new word node
+                prev->next = list->head;                                    //Have it point to the head of the list
+                list->head = prev;                                          //Have list head point to our new word node
+                return 1;
             }           
-            prev->next = createNode(newObj, ptr, fileName);
+            prev->next = createNode(newObj, ptr, fileName);                 //Otherwise, gets inserted in the middle of the list between previous node and our current node
             return 1;
-        } else if (comp == 0) { 
-            findFile(ptr, fileName);
+        } else if (comp == 0) {                                             //Word already exists, so we need to find its file
+            //printf("Pointer: %s, Word: %s, file: %s\n", ptr->data, newObj, fileName);
+            findFile(ptr, fileName);                                        //findn file for this word and increment its count
             return 1;
         }
         
@@ -196,7 +207,7 @@ int SLInsert(SortedListPtr  list, char *newObj, char *fileName) {
         ptr = ptr->next;
        
     }
-    prev->next = createNode(newObj, NULL, fileName);
+    prev->next = createNode(newObj, NULL, fileName);                        //Word doesn't exist in our list, and goes at the end of the list
     return 1;
     
 }

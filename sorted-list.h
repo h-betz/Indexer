@@ -206,5 +206,13 @@ char * SLNextItem(SortedListIteratorPtr iter);
 char * SLGetItem( SortedListIteratorPtr iter );
 
 
+//Functions necessary to creating and sorting files and words
+FileNode * createFile(char *name, FileNode *nxt);
+int compareCount(void *c1, void* c2);
+Node *createNode(char *data, Node *nxt, char *file);
+void DestroyWord(Node *word);
+void sortFiles(char *fileName, FileNode *target, FileNode *prev, Node *words);
+void findFile(Node *word, char *target);
+
 
 #endif

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #include "sorted-list.h"
+#include "index.h"
 
 int ind = 0;                    //Index to keep track of where we are at in the string we are tokenizings
 SortedListPtr words = NULL;     //our SortedList to keep track of our words
@@ -28,6 +29,10 @@ void tokenize(char *string, char *fileName) {
     char c = string[ind];
     char *token = malloc(strlen(string) + 1);
     int length = strlen(fileName) + 1;
+    
+    /*Added today*/
+    char *file = malloc(strlen(fileName) + 1);
+    strcpy(file, fileName);
 
     token[0] = '\0';                            //null terminate our token string
     ind++;
@@ -50,7 +55,8 @@ void tokenize(char *string, char *fileName) {
         }
 
         token[tokenIndex] = '\0';                   //null terminate the token
-        SLInsert(words, token, fileName);           //insert the word or increment it's occurrence if necessary
+        SLInsert(words, token, file);           //insert the word or increment it's occurrence if necessary
+        
     }
 
     
@@ -58,7 +64,7 @@ void tokenize(char *string, char *fileName) {
 
 /*Reads the contents of the file and calls the tokenizer function to tokenize the contents*/
 void readFile(char *filePath, char *fileName, char *subdirec) {
-    
+        
     FILE *f = fopen(filePath, "r");                         //open the file in read mode
     char string[1024];                                      //create a 1024 byte char array to store the string in
     if (f == NULL) {                                        //if failed to open the file, print error and return
@@ -97,12 +103,13 @@ void readDirect(char *path, char *sub_path) {
             if (!strcmp(dent->d_name, "..") || !strcmp(dent->d_name, ".")) {
                 //do nothing if we see these symbols which mean previous directory and current directory
             } else if (dent->d_type == DT_REG) {
-                
+
                 //The following appends the file name to the end of the file/directory path
                 char path_new[255];
                 
                 //If this file is part of a subdirectory in the file path we chose, do the following
                 if (sub_path != NULL) {
+                    
                     char subdirec[255];                                                                 //Create a subdirectory array
                     int x = snprintf(subdirec, sizeof(subdirec)-1, "%s/%s", sub_path, dent->d_name);    //Copy previous subdirectory path into our new one with the current file name appended
                     int len = snprintf(path_new, sizeof(path_new)-1, "%s/%s", path, dent->d_name);      //Append file name to our current file path
@@ -162,9 +169,10 @@ void writeToFile(char *new_file) {
              
             FileNode *fn = words->head->file;               //Get current file
             words->head->file = words->head->file->next;    //Move to next file
+            free(fn->name);
             free(fn);                                       //Free file node from memory
         }
-        
+
         Node *word = words->head;                           //Get word node
         words->head = words->head->next;                    //Move to next word in the list
         DestroyWord(word);                                  //Free word node 
@@ -181,11 +189,16 @@ int main (int argc, char** argv) {
     
     char *path = argv[2];                               //Get directory or file name to read
     char *new_file = argv[1];                           //Get name of the file user wants to write to 
-    
     int (*compare)(void *, void *) = compareStrings;    //Create our comparator function
     
     words = SLCreate(compare);                          //Create our sorted list
-    readDirect(path, NULL);                             //read the files in the directory and in any subdirectories
+    int x = 2;
+    while (x < argc) {
+        path = argv[x];
+        x++;
+        readDirect(path, NULL);
+    }
+        
     writeToFile(new_file);                              //write contents to the file 
     SLDestroy(words);
     
